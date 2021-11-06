@@ -12,7 +12,7 @@ connectDB();
 //Connect To DB
 async function connectDB() {
   dbConnection = await mongoose.connect(
-    "mongodb+srv://inevitable:Danish1915.@cluster0.vcqka.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+    "mongodb+srv://inevitable:Danish1915.@cluster0.vcqka.mongodb.net/database?retryWrites=true&w=majority"
   );
   if (dbConnection) {
     setUpGql();
@@ -21,8 +21,24 @@ async function connectDB() {
   }
 }
 
+//Functions
+
+//UserModel Functions
+
+async function setUser(data) {
+  let user = new userModel(data.user);
+  await user.save();
+  return user;
+}
+
 async function getUser(userName) {
-  return { userEmail: `${userName}@gmail.com`, userName: userName };
+  let user = await userModel.find({ userName: userName });
+  return user[0];
+}
+
+async function getUsers() {
+  let users = await userModel.find();
+  return users;
 }
 
 // Start Server
@@ -40,6 +56,7 @@ type User{
 
 type Query{
     user(userName:String!):User
+    users:[User]
 }
 
 type Mutation{
@@ -49,7 +66,8 @@ type Mutation{
 
   let root = {
     user: ({ userName }) => getUser(userName),
-    insertUser: (user) => console.log(user),
+    users: () => getUsers(),
+    insertUser: (data) => setUser(data),
   };
 
   app.use(
