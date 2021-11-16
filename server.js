@@ -1,9 +1,13 @@
 // Server
 const express = require("express");
+const http = require("http");
 const app = express();
-const { graphqlHTTP } = require("express-graphql");
-const { buildSchema } = require("graphql");
+const httpServer = http.createServer(app);
 const mongoose = require("mongoose");
+
+// Apollo
+const { ApolloServer, gql } = require("apollo-server-express");
+const { ApolloServerPluginDrainHttpServer } = require("apollo-server-core");
 
 //Models
 const userModel = require("./models/UserModel");
@@ -16,9 +20,13 @@ connectDB();
 
 //Connect To DB
 async function connectDB() {
-  dbConnection = await mongoose.connect(
-    "mongodb+srv://inevitable:Danish1915.@cluster0.vcqka.mongodb.net/database?retryWrites=true&w=majority"
-  );
+  try {
+    dbConnection = await mongoose.connect(
+      "mongodb+srv://inevitable:Danish1915.@cluster0.vcqka.mongodb.net/database?retryWrites=true&w=majority"
+    );
+  } catch (error) {
+    console.error(error);
+  }
   if (dbConnection) {
     setUpGql();
   } else {
@@ -100,7 +108,7 @@ async function getFollowers(userName, skip, limit) {
   return connections;
 }
 
-async function getFollowing(userName, skip, limit) {
+async function getFollowings(userName, skip, limit) {
   let connections = await connectionModel.aggregate([
     {
       $match: {
@@ -208,91 +216,108 @@ async function getUserHomePosts(userName) {
 
 // Start Server
 async function setUpGql() {
-  let schema = buildSchema(`
-input UserInput{
-    userEmail:String!
-    userPhone:String!
-    userName: String!
-    profilepicture:String
-    bio:String
-    visibility:Int
-    deviceToken:[String]
-    postCount:Int
-    followerCount:Int
-    followingCount:Int
-}
+  app.get("/", (req, res) => {
+    res.status(200).send("Server...");
+  });
 
-input ConnectionInput{
-  userName:String!
-  who: String!
-}
+  const typeDefs = gql`
+    input UserInput {
+      userEmail: String!
+      userPhone: String!
+      userName: String!
+      profilepicture: String
+      bio: String
+      visibility: Int
+      deviceToken: [String]
+      postCount: Int
+      followerCount: Int
+      followingCount: Int
+    }
 
+    input ConnectionInput {
+      userName: String!
+      who: String!
+    }
 
-input PostInput{
-  userName:String!
-  caption:String
-  hashTags:[String]
-  type:Int!
-  data:String!
-}
+    input PostInput {
+      userName: String!
+      caption: String
+      hashTags: [String]
+      type: Int!
+      data: String!
+    }
 
-type User{
-  _id:String!,
-  userEmail:String
-  userName: String
-}
+    type User {
+      _id: String!
+      userEmail: String
+      userName: String
+    }
 
-type Connection{
-  _id:String!
-  userName:String!
-}
+    type Connection {
+      _id: String!
+      userName: String!
+    }
 
-type Post{
-  userName:String!
-  likeCount:Int!
-  commentCount:Int!
-  caption:String
-  hashTags:[String]
-  type:Int!
-  data:String!
-}
+    type Post {
+      userName: String!
+      likeCount: Int!
+      commentCount: Int!
+      caption: String
+      hashTags: [String]
+      type: Int!
+      data: String!
+    }
 
-type Query{
-    user(userName:String!):User
-    followers(userName:String!,skip:Int=0,limit:Int=2):[Connection]
-    following(userName:String!,skip:Int=0,limit:Int=2):[Connection]
-    userPosts(userName:String!):[Post]
-    homePosts(userName:String!):[Post]
-}
+    type Query {
+      user(userName: String!): User
+      followers(userName: String!, skip: Int = 0, limit: Int = 2): [Connection]
+      followings(userName: String!, skip: Int = 0, limit: Int = 2): [Connection]
+      userPosts(userName: String!): [Post]
+      homePosts(userName: String!): [Post]
+    }
 
-type Mutation{
-  insertUser(user:UserInput!):User
-  followUser(connection:ConnectionInput!):Connection
-  insertPost(post:PostInput!):Post
-}
-`);
+    type Mutation {
+      insertUser(user: UserInput!): User
+      followUser(connection: ConnectionInput!): Connection
+      insertPost(post: PostInput!): Post
+    }
+  `;
 
-  let root = {
-    user: ({ userName }) => getUser(userName),
-    insertUser: (data) => setUser(data),
-    followUser: (data) => setConnection(data),
-    followers: ({ userName, skip, limit }) =>
-      getFollowers(userName, skip, limit),
-    following: ({ userName, skip, limit }) =>
-      getFollowing(userName, skip, limit),
-    insertPost: (post) => addPost(post),
-    userPosts: ({ userName }) => getUserPosts(userName),
-    homePosts: ({ userName }) => getUserHomePosts(userName),
+  const resolvers = {
+    Query: {
+      user(parent, args, context, info) {
+        console.log(parent);
+        console.log(context);
+        console.log(info);
+        return getUser(args.userName);
+      },
+
+      followers(parent, args, context, info) {
+        return getFollowers(args.userName, args.skip, args.limit);
+      },
+
+      followings(parent, args, context, info) {
+        return getFollowings(args.userName, args.skip, args.limit);
+      },
+
+      userPosts(parent, args, context, info) {
+        return getUserPosts(args.userName);
+      },
+
+      homePosts(parent, args, context, info) {
+        return getUserHomePosts(args.userName);
+      },
+    },
   };
 
-  app.use(
-    "/graphql",
-    graphqlHTTP({
-      schema: schema,
-      rootValue: root,
-      graphiql: true,
-    })
-  );
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  });
 
-  app.listen(4000, () => console.log("Now browse to localhost:4000/graphql"));
+  await server.start();
+  server.applyMiddleware({ app });
+  await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
+  console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`);
 }
