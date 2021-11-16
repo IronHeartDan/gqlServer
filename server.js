@@ -14,6 +14,10 @@ const userModel = require("./models/UserModel");
 const connectionModel = require("./models/ConnectionModel");
 const postModel = require("./models/PostModel");
 
+//gql
+const typeDefs = require("./gql/typeDefs");
+const resolvers = require("./gql/resolvers");
+
 var dbConnection = null;
 
 connectDB();
@@ -28,7 +32,11 @@ async function connectDB() {
     console.error(error);
   }
   if (dbConnection) {
-    setUpGql();
+    try {
+      setUpGql();
+    } catch (error) {
+      console.error(error);
+    }
   } else {
     console.log(`Err:${dbConnection}`);
   }
@@ -219,96 +227,6 @@ async function setUpGql() {
   app.get("/", (req, res) => {
     res.status(200).send("Server...");
   });
-
-  const typeDefs = gql`
-    input UserInput {
-      userEmail: String!
-      userPhone: String!
-      userName: String!
-      profilepicture: String
-      bio: String
-      visibility: Int
-      deviceToken: [String]
-      postCount: Int
-      followerCount: Int
-      followingCount: Int
-    }
-
-    input ConnectionInput {
-      userName: String!
-      who: String!
-    }
-
-    input PostInput {
-      userName: String!
-      caption: String
-      hashTags: [String]
-      type: Int!
-      data: String!
-    }
-
-    type User {
-      _id: String!
-      userEmail: String
-      userName: String
-    }
-
-    type Connection {
-      _id: String!
-      userName: String!
-    }
-
-    type Post {
-      userName: String!
-      likeCount: Int!
-      commentCount: Int!
-      caption: String
-      hashTags: [String]
-      type: Int!
-      data: String!
-    }
-
-    type Query {
-      user(userName: String!): User
-      followers(userName: String!, skip: Int = 0, limit: Int = 2): [Connection]
-      followings(userName: String!, skip: Int = 0, limit: Int = 2): [Connection]
-      userPosts(userName: String!): [Post]
-      homePosts(userName: String!): [Post]
-    }
-
-    type Mutation {
-      insertUser(user: UserInput!): User
-      followUser(connection: ConnectionInput!): Connection
-      insertPost(post: PostInput!): Post
-    }
-  `;
-
-  const resolvers = {
-    Query: {
-      user(parent, args, context, info) {
-        console.log(parent);
-        console.log(context);
-        console.log(info);
-        return getUser(args.userName);
-      },
-
-      followers(parent, args, context, info) {
-        return getFollowers(args.userName, args.skip, args.limit);
-      },
-
-      followings(parent, args, context, info) {
-        return getFollowings(args.userName, args.skip, args.limit);
-      },
-
-      userPosts(parent, args, context, info) {
-        return getUserPosts(args.userName);
-      },
-
-      homePosts(parent, args, context, info) {
-        return getUserHomePosts(args.userName);
-      },
-    },
-  };
 
   const server = new ApolloServer({
     typeDefs,
