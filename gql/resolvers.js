@@ -9,9 +9,6 @@ const {
 const resolvers = {
   Query: {
     user(parent, args, context, info) {
-      console.log(parent);
-      console.log(context);
-      console.log(info);
       return getUser(args.userName);
     },
 
