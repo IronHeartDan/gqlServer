@@ -61,6 +61,10 @@ const typeDefs = gql`
     followUser(connection: ConnectionInput!): Connection
     insertPost(post: PostInput!): Post
   }
+
+  type Subscription {
+    userCreated: User
+  }
 `;
 
 module.exports = typeDefs;

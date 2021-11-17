@@ -1,3 +1,11 @@
+const {
+  getUser,
+  getFollowers,
+  getFollowings,
+  getUserPosts,
+  getUserHomePosts,
+} = require("../mongoose/DbOperations");
+
 const resolvers = {
   Query: {
     user(parent, args, context, info) {
