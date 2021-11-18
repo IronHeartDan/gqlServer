@@ -6,11 +6,11 @@ const httpServer = http.createServer(app);
 
 
 // Apollo
-const { ApolloServer, gql } = require("apollo-server-express");
+const { ApolloServer } = require("apollo-server-express");
 const { ApolloServerPluginDrainHttpServer } = require("apollo-server-core");
-const  { execute, subscribe } =  require('graphql');
-const { SubscriptionServer } =  require('subscriptions-transport-ws');
-const { makeExecutableSchema } =  require('@graphql-tools/schema');
+const { execute, subscribe } = require("graphql");
+const { SubscriptionServer } = require("subscriptions-transport-ws");
+const { makeExecutableSchema } = require("@graphql-tools/schema");
 
 //gql
 const typeDefs = require("./gql/typeDefs");
@@ -22,7 +22,7 @@ const { connectDB } = require("./mongoose/DbOperations");
 if (connectDB()) {
   startServer();
 } else {
-  console.log("Problem");
+  console.log("Connection to db returned null");
 }
 
 // Start Server
@@ -35,21 +35,31 @@ async function startServer() {
 
   const server = new ApolloServer({
     schema,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              subscriptionServer.close();
+            },
+          };
+        },
+      },
+    ],
   });
 
-  const subscriptionServer = SubscriptionServer.create({
-    // This is the `schema` we just created.
-    schema,
-    // These are imported from `graphql`.
-    execute,
-    subscribe,
- }, {
-    // This is the `httpServer` we created in a previous step.
-    server: httpServer,
-    // This `server` is the instance returned from `new ApolloServer`.
-    path: server.graphqlPath,
- });
+  const subscriptionServer = SubscriptionServer.create(
+    {
+      schema,
+      execute,
+      subscribe,
+    },
+    {
+      server: httpServer,
+      path: server.graphqlPath,
+    }
+  );
 
   await server.start();
   server.applyMiddleware({ app });
