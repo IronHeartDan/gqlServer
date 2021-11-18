@@ -64,6 +64,7 @@ const typeDefs = gql`
 
   type Subscription {
     userCreated: User
+    postAdded: Post
   }
 `;
 

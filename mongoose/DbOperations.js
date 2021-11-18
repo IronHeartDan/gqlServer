@@ -176,6 +176,25 @@ async function getUserHomePosts(userName) {
       },
     },
     {
+      $unionWith: {
+        coll: "users",
+        pipeline: [
+          {
+            $match: {
+              userName: "darknoon",
+            },
+          },
+          {
+            $replaceRoot: {
+              newRoot: {
+                userName: "$userName",
+              },
+            },
+          },
+        ],
+      },
+    },
+    {
       $lookup: {
         from: "posts",
         localField: "userName",
