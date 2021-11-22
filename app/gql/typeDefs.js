@@ -27,6 +27,11 @@ const typeDefs = gql`
     data: String!
   }
 
+  input LikerInput {
+    postId: String!
+    who: String!
+  }
+
   type User {
     _id: String!
     userEmail: String
@@ -50,6 +55,11 @@ const typeDefs = gql`
     data: String!
   }
 
+  type Liker {
+    _id: String!
+    who: String!
+  }
+
   type Query {
     user(userId: String!): User
     followers(userId: String!, skip: Int = 0, limit: Int = 2): [Connection]
@@ -62,6 +72,7 @@ const typeDefs = gql`
     insertUser(user: UserInput!): User
     followUser(connection: ConnectionInput!): Connection
     insertPost(post: PostInput!): Post
+    likePost(liker: LikerInput!): Liker
   }
 
   type Subscription {

@@ -5,6 +5,7 @@ const { ObjectId } = require("mongodb");
 const userModel = require("../models/UserModel");
 const connectionModel = require("../models/ConnectionModel");
 const postModel = require("../models/PostModel");
+const likerModel = require("../models/LikerModel");
 
 //Connect To DB
 async function connectDB() {
@@ -253,6 +254,12 @@ async function getUserHomePosts(userId) {
   return posts;
 }
 
+async function setLike(data) {
+  let liker = new likerModel(data.liker);
+  await liker.save();
+  return liker;
+}
+
 module.exports = {
   connectDB,
   setUser,
@@ -261,6 +268,7 @@ module.exports = {
   getFollowers,
   getFollowings,
   addPost,
+  setLike,
   getUserPosts,
   getUserHomePosts,
 };

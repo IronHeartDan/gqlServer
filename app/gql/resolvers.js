@@ -5,6 +5,7 @@ const {
   setUser,
   setConnection,
   addPost,
+  setLike,
   getUser,
   getFollowers,
   getFollowings,
@@ -26,6 +27,10 @@ const resolvers = {
       let post = addPost(args);
       pubsub.publish("POST_ADDED", { postAdded: post });
       return post;
+    },
+
+    likePost(parent, args, context, info) {
+      return setLike(args);
     },
   },
 
