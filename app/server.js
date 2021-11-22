@@ -14,15 +14,18 @@ const { makeExecutableSchema } = require("@graphql-tools/schema");
 //gql
 const typeDefs = require("./gql/typeDefs");
 const resolvers = require("./gql/resolvers");
-
+ 
 //Mongoose
 const { connectDB } = require("./mongoose/DbOperations");
 
-if (connectDB()) {
-  startServer();
-} else {
-  console.log("Connection to db returned null");
-}
+
+connectDB()
+  .then((connection) => {
+    startServer();
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
 // Start Server
 async function startServer() {

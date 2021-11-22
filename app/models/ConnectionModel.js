@@ -1,14 +1,14 @@
 const mongoose = require("mongoose");
-
 const Schema = mongoose.Schema;
+const ObjectId = Schema.Types.ObjectId;
 
 const connectionSchema = new Schema({
-  userName: {
-    type: String,
+  userId: {
+    type: ObjectId,
     required: true,
   },
   who: {
-    type: String,
+    type: ObjectId,
     required: true,
   },
 });

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ObjectId } = require("mongodb");
 
 //Models
 const userModel = require("../models/UserModel");
@@ -8,19 +9,10 @@ const postModel = require("../models/PostModel");
 //Connect To DB
 async function connectDB() {
   let dbConnection = null;
-  try {
-    dbConnection = await mongoose.connect(
-      "mongodb+srv://inevitable:Danish1915.@cluster0.vcqka.mongodb.net/database?retryWrites=true&w=majority"
-    );
-  } catch (error) {
-    console.error(error);
-  }
-
-  if (dbConnection) {
-    return dbConnection;
-  } else {
-    console.log(`Err:${dbConnection}`);
-  }
+  dbConnection = await mongoose.connect(
+    "mongodb+srv://inevitable:Danish1915.@cluster0.vcqka.mongodb.net/database?retryWrites=true&w=majority"
+  );
+  return dbConnection;
 }
 
 //Functions
@@ -46,18 +38,23 @@ async function setConnection(data) {
   return connection;
 }
 
-async function getFollowers(userName, skip, limit) {
+async function getConnection(data) {
+  let connection = connectionModel(data.connection);
+  return connection;
+}
+
+async function getFollowers(userId, skip, limit) {
   let connections = await connectionModel.aggregate([
     {
       $match: {
-        userName: `${userName}`,
+        userId: new ObjectId(`${userId}`),
       },
     },
     {
       $lookup: {
         from: "users",
         localField: "who",
-        foreignField: "userName",
+        foreignField: "_id",
         as: "userDetail",
       },
     },
@@ -97,18 +94,18 @@ async function getFollowers(userName, skip, limit) {
   return connections;
 }
 
-async function getFollowings(userName, skip, limit) {
+async function getFollowings(userId, skip, limit) {
   let connections = await connectionModel.aggregate([
     {
       $match: {
-        who: `${userName}`,
+        who: `${userId}`,
       },
     },
     {
       $lookup: {
         from: "users",
-        localField: "userName",
-        foreignField: "userName",
+        localField: "userId",
+        foreignField: "_id",
         as: "userDetail",
       },
     },
@@ -161,17 +158,17 @@ async function getUserPosts(userName) {
   return posts;
 }
 
-async function getUserHomePosts(userName) {
+async function getUserHomePosts(userId) {
   let posts = await connectionModel.aggregate([
     {
       $match: {
-        who: `${userName}`,
+        who: `${userId}`,
       },
     },
     {
       $replaceRoot: {
         newRoot: {
-          userName: "$userName",
+          userId: "$userId",
         },
       },
     },

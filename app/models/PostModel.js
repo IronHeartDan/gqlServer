@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+// const ObjectId = Schema.Types.ObjectId;
+const { ObjectId } = require("mongodb");
 
 // this is our post schema....
-const postSchema = new mongoose.Schema({
-  userName: {
-    type: String,
+const postSchema = new Schema({
+  userId: {
+    type: ObjectId,
     required: true,
   },
   likeCount: {
@@ -15,9 +18,11 @@ const postSchema = new mongoose.Schema({
     type: Number,
   },
   caption: {
+    default: null,
     type: String,
   },
   hashTags: {
+    default: null,
     type: [String],
   },
   type: {

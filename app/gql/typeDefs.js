@@ -15,12 +15,12 @@ const typeDefs = gql`
   }
 
   input ConnectionInput {
-    userName: String!
+    userId: String!
     who: String!
   }
 
   input PostInput {
-    userName: String!
+    userId: String!
     caption: String
     hashTags: [String]
     type: Int!
@@ -39,7 +39,7 @@ const typeDefs = gql`
   }
 
   type Post {
-    userName: String!
+    userId: String!
     likeCount: Int!
     commentCount: Int!
     caption: String
@@ -49,11 +49,11 @@ const typeDefs = gql`
   }
 
   type Query {
-    user(userName: String!): User
-    followers(userName: String!, skip: Int = 0, limit: Int = 2): [Connection]
-    followings(userName: String!, skip: Int = 0, limit: Int = 2): [Connection]
-    userPosts(userName: String!): [Post]
-    homePosts(userName: String!): [Post]
+    user(userId: String!): User
+    followers(userId: String!, skip: Int = 0, limit: Int = 2): [Connection]
+    followings(userId: String!, skip: Int = 0, limit: Int = 2): [Connection]
+    userPosts(userId: String!): [Post]
+    homePosts(userId: String!): [Post]
   }
 
   type Mutation {
@@ -64,8 +64,8 @@ const typeDefs = gql`
 
   type Subscription {
     userCreated: User
-    postAdded: Post
+    postAdded(userName: String!): Post
   }
 `;
 
-module.exports = typeDefs;
+module.exports = typeDefs; 

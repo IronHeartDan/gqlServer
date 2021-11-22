@@ -24,33 +24,31 @@ const resolvers = {
 
     insertPost(parent, args, context, info) {
       let post = addPost(args);
-      if (post) {
-        // pubsub.publish("USER_CREATED", { userCreated: getUser(args.userName) });
-        pubsub.publish("POST_ADDED", { postAdded: post });
-      }
+      pubsub.publish("POST_ADDED", { postAdded: post });
       return post;
     },
   },
 
   Query: {
     user(parent, args, context, info) {
-      return getUser(args.userName);
+      return getUser(args.userId);
     },
 
     followers(parent, args, context, info) {
-      return getFollowers(args.userName, args.skip, args.limit);
+      console.log(args);
+      return getFollowers(args.userId, args.skip, args.limit);
     },
 
     followings(parent, args, context, info) {
-      return getFollowings(args.userName, args.skip, args.limit);
+      return getFollowings(args.userId, args.skip, args.limit);
     },
 
     userPosts(parent, args, context, info) {
-      return getUserPosts(args.userName);
+      return getUserPosts(args.userId);
     },
 
     homePosts(parent, args, context, info) {
-      return getUserHomePosts(args.userName);
+      return getUserHomePosts(args.userId);
     },
   },
 
@@ -68,7 +66,11 @@ const resolvers = {
     postAdded: {
       subscribe: withFilter(
         () => pubsub.asyncIterator(["POST_ADDED"]),
-        () => true
+        (payload, variables) => {
+          console.log(`Payload ${JSON.stringify(payload)}`);
+          console.log(`Variables ${JSON.stringify(variables)}`);
+          return true;
+        }
       ),
     },
   },
