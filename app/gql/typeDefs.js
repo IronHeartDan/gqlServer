@@ -39,6 +39,8 @@ const typeDefs = gql`
   }
 
   type Post {
+    userName: String!
+    userEmail: String!
     userId: String!
     likeCount: Int!
     commentCount: Int!

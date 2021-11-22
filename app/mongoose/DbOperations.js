@@ -162,7 +162,7 @@ async function getUserHomePosts(userId) {
   let posts = await connectionModel.aggregate([
     {
       $match: {
-        who: `${userId}`,
+        who: new ObjectId(userId),
       },
     },
     {
@@ -173,18 +173,44 @@ async function getUserHomePosts(userId) {
       },
     },
     {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userDetail",
+      },
+    },
+    {
+      $unwind: {
+        path: "$userDetail",
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: "$userDetail",
+      },
+    },
+    {
+      $project: {
+        userName: 1,
+        userEmail: 1,
+      },
+    },
+    {
       $unionWith: {
         coll: "users",
         pipeline: [
           {
             $match: {
-              userName: "darknoon",
+              _id: new ObjectId(userId),
             },
           },
           {
             $replaceRoot: {
               newRoot: {
+                _id: "$_id",
                 userName: "$userName",
+                userEmail: "$userEmail",
               },
             },
           },
@@ -194,14 +220,22 @@ async function getUserHomePosts(userId) {
     {
       $lookup: {
         from: "posts",
-        localField: "userName",
-        foreignField: "userName",
+        localField: "_id",
+        foreignField: "userId",
         as: "posts",
       },
     },
     {
       $unwind: {
         path: "$posts",
+      },
+    },
+    {
+      $set: {
+        posts: {
+          userName: "$userName",
+          userEmail: "$userEmail",
+        },
       },
     },
     {
