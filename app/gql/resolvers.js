@@ -6,6 +6,7 @@ const {
   setConnection,
   addPost,
   setLike,
+  getLikers,
   getUser,
   getFollowers,
   getFollowings,
@@ -19,14 +20,21 @@ const resolvers = {
       return setUser(args);
     },
 
-    followUser(parent, args, context, info) {
-      return setConnection(args);
+    async followUser(parent, args, context, info) {
+      let connection = await setConnection(args);
+      return {
+        connectionId: connection._id,
+        status: true,
+      };
     },
 
-    insertPost(parent, args, context, info) {
-      let post = addPost(args);
+    async insertPost(parent, args, context, info) {
+      let post = await addPost(args);
       pubsub.publish("POST_ADDED", { postAdded: post });
-      return post;
+      return {
+        postId: post._id,
+        status: true,
+      };
     },
 
     likePost(parent, args, context, info) {
@@ -54,6 +62,10 @@ const resolvers = {
 
     homePosts(parent, args, context, info) {
       return getUserHomePosts(args.userId);
+    },
+
+    likers(parent, args, context, info) {
+      return getLikers(args.postId);
     },
   },
 

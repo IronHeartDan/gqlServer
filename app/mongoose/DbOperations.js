@@ -26,8 +26,8 @@ async function setUser(data) {
   return user;
 }
 
-async function getUser(userName) {
-  let user = await userModel.find({ userName: userName });
+async function getUser(userId) {
+  let user = await userModel.find({ _id: userId });
   return user[0];
 }
 
@@ -95,55 +95,70 @@ async function getFollowers(userId, skip, limit) {
   return connections;
 }
 
+// async function getFollowings(userId, skip, limit) {
+//   let connections = await connectionModel.aggregate([
+//     {
+//       $match: {
+//         who: new ObjectId(userId),
+//       },
+//     },
+//     {
+//       $lookup: {
+//         from: "users",
+//         localField: "userId",
+//         foreignField: "_id",
+//         as: "userDetail",
+//       },
+//     },
+//     {
+//       $unwind: {
+//         path: "$userDetail",
+//       },
+//     },
+//     {
+//       $project: {
+//         "userDetail.userName": 1,
+//         "userDetail.userEmail": 1,
+//       },
+//     },
+//     {
+//       $addFields: {
+//         "userDetail._id": "$_id",
+//       },
+//     },
+//     {
+//       $replaceRoot: {
+//         newRoot: "$userDetail",
+//       },
+//     },
+//     {
+//       $sort: {
+//         _id: 1,
+//       },
+//     },
+//     {
+//       $skip: skip,
+//     },
+//     {
+//       $limit: limit,
+//     },
+//   ]);
+//   return connections;
+// }
+
 async function getFollowings(userId, skip, limit) {
-  let connections = await connectionModel.aggregate([
+  let users = await userModel.aggregate([
     {
       $match: {
-        who: `${userId}`,
+        _id: {
+          $in: await connectionModel.distinct("userId", {
+            who: new ObjectId(userId),
+          }),
+        },
       },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "userId",
-        foreignField: "_id",
-        as: "userDetail",
-      },
-    },
-    {
-      $unwind: {
-        path: "$userDetail",
-      },
-    },
-    {
-      $project: {
-        "userDetail.userName": 1,
-        "userDetail.userEmail": 1,
-      },
-    },
-    {
-      $addFields: {
-        "userDetail._id": "$_id",
-      },
-    },
-    {
-      $replaceRoot: {
-        newRoot: "$userDetail",
-      },
-    },
-    {
-      $sort: {
-        _id: 1,
-      },
-    },
-    {
-      $skip: skip,
-    },
-    {
-      $limit: limit,
     },
   ]);
-  return connections;
+  return users;
 }
 
 // Post Methods
@@ -159,89 +174,111 @@ async function getUserPosts(userName) {
   return posts;
 }
 
+// async function getUserHomePosts(userId) {
+//   let posts = await connectionModel.aggregate([
+//     {
+//       $match: {
+//         who: new ObjectId(userId),
+//       },
+//     },
+//     {
+//       $replaceRoot: {
+//         newRoot: {
+//           userId: "$userId",
+//         },
+//       },
+//     },
+//     {
+//       $lookup: {
+//         from: "users",
+//         localField: "userId",
+//         foreignField: "_id",
+//         as: "userDetail",
+//       },
+//     },
+//     {
+//       $unwind: {
+//         path: "$userDetail",
+//       },
+//     },
+//     {
+//       $replaceRoot: {
+//         newRoot: "$userDetail",
+//       },
+//     },
+//     {
+//       $project: {
+//         userName: 1,
+//         profilepicture: 1,
+//       },
+//     },
+//     {
+//       $unionWith: {
+//         coll: "users",
+//         pipeline: [
+//           {
+//             $match: {
+//               _id: new ObjectId(userId),
+//             },
+//           },
+//           {
+//             $replaceRoot: {
+//               newRoot: {
+//                 _id: "$_id",
+//                 userName: "$userName",
+//                 profilepicture: "$profilepicture",
+//               },
+//             },
+//           },
+//         ],
+//       },
+//     },
+//     {
+//       $lookup: {
+//         from: "posts",
+//         localField: "_id",
+//         foreignField: "userId",
+//         as: "posts",
+//       },
+//     },
+//     {
+//       $unwind: {
+//         path: "$posts",
+//       },
+//     },
+//     {
+//       $set: {
+//         posts: {
+//           userName: "$userName",
+//           userEmail: "$userEmail",
+//         },
+//       },
+//     },
+//     {
+//       $replaceRoot: {
+//         newRoot: "$posts",
+//       },
+//     },
+//     {
+//       $sort: {
+//         _id: -1,
+//       },
+//     },
+//   ]);
+
+//   return posts;
+// }
+
 async function getUserHomePosts(userId) {
-  let posts = await connectionModel.aggregate([
+  console.log(userId);
+  let posts = await postModel.aggregate([
     {
       $match: {
-        who: new ObjectId(userId),
-      },
-    },
-    {
-      $replaceRoot: {
-        newRoot: {
-          userId: "$userId",
+        userId: {
+          $in: await connectionModel.distinct("userId", {
+            who: new ObjectId(userId),
+          }),
         },
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "userId",
-        foreignField: "_id",
-        as: "userDetail",
-      },
-    },
-    {
-      $unwind: {
-        path: "$userDetail",
-      },
-    },
-    {
-      $replaceRoot: {
-        newRoot: "$userDetail",
-      },
-    },
-    {
-      $project: {
-        userName: 1,
-        userEmail: 1,
-      },
-    },
-    {
-      $unionWith: {
-        coll: "users",
-        pipeline: [
-          {
-            $match: {
-              _id: new ObjectId(userId),
-            },
-          },
-          {
-            $replaceRoot: {
-              newRoot: {
-                _id: "$_id",
-                userName: "$userName",
-                userEmail: "$userEmail",
-              },
-            },
-          },
-        ],
-      },
-    },
-    {
-      $lookup: {
-        from: "posts",
-        localField: "_id",
-        foreignField: "userId",
-        as: "posts",
-      },
-    },
-    {
-      $unwind: {
-        path: "$posts",
-      },
-    },
-    {
-      $set: {
-        posts: {
-          userName: "$userName",
-          userEmail: "$userEmail",
-        },
-      },
-    },
-    {
-      $replaceRoot: {
-        newRoot: "$posts",
       },
     },
     {
@@ -250,7 +287,6 @@ async function getUserHomePosts(userId) {
       },
     },
   ]);
-
   return posts;
 }
 
@@ -258,6 +294,41 @@ async function setLike(data) {
   let liker = new likerModel(data.liker);
   await liker.save();
   return liker;
+}
+
+async function getLikers(postId) {
+  let likers = await likerModel.aggregate([
+    {
+      $match: {
+        postId: new ObjectId(postId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "who",
+        foreignField: "_id",
+        as: "userDetails",
+      },
+    },
+    {
+      $unwind: {
+        path: "$userDetails",
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: "$userDetails",
+      },
+    },
+    {
+      $project: {
+        userName: 1,
+        profilepicture: 1,
+      },
+    },
+  ]);
+  return likers;
 }
 
 module.exports = {
@@ -269,6 +340,7 @@ module.exports = {
   getFollowings,
   addPost,
   setLike,
+  getLikers,
   getUserPosts,
   getUserHomePosts,
 };
