@@ -146,6 +146,7 @@ async function getFollowers(userId, skip, limit) {
 //   return connections;
 // }
 
+// Second Approach
 async function getFollowings(userId, skip, limit) {
   let users = await userModel.aggregate([
     {
@@ -269,23 +270,113 @@ async function getUserPosts(userName) {
 //   return posts;
 // }
 
+// Second Approach
+
+// async function getUserHomePosts(userId) {
+//   console.log(userId);
+//   let posts = await postModel.aggregate([
+//     {
+//       $match: {
+//         userId: {
+//           $in: await connectionModel.distinct("userId", {
+//             who: new ObjectId(userId),
+//           }),
+//         },
+//       },
+//     },
+//     {
+//       $sort: {
+//         _id: -1,
+//       },
+//     },
+//   ]);
+//   return posts;
+// }
+
+
+// Third Approach
 async function getUserHomePosts(userId) {
-  console.log(userId);
-  let posts = await postModel.aggregate([
+  let posts = await connectionModel.aggregate([
     {
-      $match: {
-        userId: {
-          $in: await connectionModel.distinct("userId", {
-            who: new ObjectId(userId),
-          }),
-        },
-      },
-    },
-    {
-      $sort: {
-        _id: -1,
-      },
-    },
+      '$match': {
+        'who': new ObjectId(userId)
+      }
+    }, {
+      '$replaceRoot': {
+        'newRoot': {
+          'userId': '$userId'
+        }
+      }
+    }, {
+      '$lookup': {
+        'from': 'posts', 
+        'let': {
+          'userId': '$userId'
+        }, 
+        'pipeline': [
+          {
+            '$match': {
+              '$expr': {
+                '$and': [
+                  {
+                    '$eq': [
+                      '$userId', '$$userId'
+                    ]
+                  }, 
+                  // {
+                  //   '$gt': [
+                  //     '$_id', new ObjectId('619d1238a91632857278e5ef')
+                  //   ]
+                  // }
+                ]
+              }
+            }
+          }
+        ], 
+        'as': 'post'
+      }
+    }, {
+      '$unwind': {
+        'path': '$post'
+      }
+    }, {
+      '$lookup': {
+        'from': 'users', 
+        'let': {
+          'userId': '$userId'
+        }, 
+        'pipeline': [
+          {
+            '$match': {
+              '$expr': {
+                '$eq': [
+                  '$_id', '$$userId'
+                ]
+              }
+            }
+          }, {
+            '$project': {
+              'userName': 1, 
+              'profilepicture': 1
+            }
+          }
+        ], 
+        'as': 'user'
+      }
+    }, {
+      '$unwind': {
+        'path': '$user'
+      }
+    }, {
+      '$set': {
+        'post.userName': '$user.userName', 
+        'post.profilepicture': '$user.profilepicture'
+      }
+    }, {
+      '$replaceRoot': {
+        'newRoot': '$post'
+      }
+    }
   ]);
   return posts;
 }
