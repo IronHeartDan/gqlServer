@@ -47,6 +47,10 @@ const resolvers = {
       return getUser(args.userId);
     },
 
+    profile(parent, args, context, info) {
+      return getUser(args.userId);
+    },
+
     followers(parent, args, context, info) {
       console.log(args);
       return getFollowers(args.userId, args.skip, args.limit);

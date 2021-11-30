@@ -38,6 +38,18 @@ const typeDefs = gql`
     userName: String
   }
 
+  type Profile {
+    _id: String!
+    userEmail: String
+    userName: String
+    profilepicture: String
+    bio: String
+    visibility: Int!
+    postCount: Int!
+    followerCount: Int!
+    followingCount: Int!
+  }
+
   type Connection {
     _id: String!
     userName: String!
@@ -73,6 +85,7 @@ const typeDefs = gql`
 
   type Query {
     user(userId: String!): User
+    profile(userId: String!): Profile
     followers(userId: String!, skip: Int = 0, limit: Int = 2): [User]
     followings(userId: String!, skip: Int = 0, limit: Int = 2): [User]
     userPosts(userId: String!): [Post]
