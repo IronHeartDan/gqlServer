@@ -31,6 +31,14 @@ async function getUser(userId) {
   return user[0];
 }
 
+async function searchUser(userName) {
+  let query = new RegExp(`^${userName}.*`);
+  console.log(query);
+  let users = await userModel.find({ userName: query });
+  console.log(users);
+  return users;
+}
+
 //Connection Model Functions
 
 async function setConnection(data) {
@@ -167,48 +175,51 @@ async function getFollowers(userId, skip, limit) {
 async function getFollowings(userId, skip, limit) {
   let users = await connectionModel.aggregate([
     {
-      '$match': {
-        'who': new ObjectId(userId)
-      }
-    }, {
-      '$replaceRoot': {
-        'newRoot': {
-          'userId': '$userId'
-        }
-      }
-    }, {
-      '$lookup': {
-        'from': 'users', 
-        'let': {
-          'userId': '$userId'
-        }, 
-        'pipeline': [
+      $match: {
+        who: new ObjectId(userId),
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          userId: "$userId",
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        let: {
+          userId: "$userId",
+        },
+        pipeline: [
           {
-            '$match': {
-              '$expr': {
-                '$eq': [
-                  '$_id', '$$userId'
-                ]
-              }
-            }
-          }, {
-            '$project': {
-              'userName': 1, 
-              'profilepicture': 1
-            }
-          }
-        ], 
-        'as': 'user'
-      }
-    }, {
-      '$unwind': {
-        'path': '$user'
-      }
-    }, {
-      '$replaceRoot': {
-        'newRoot': '$user'
-      }
-    }
+            $match: {
+              $expr: {
+                $eq: ["$_id", "$$userId"],
+              },
+            },
+          },
+          {
+            $project: {
+              userName: 1,
+              profilepicture: 1,
+            },
+          },
+        ],
+        as: "user",
+      },
+    },
+    {
+      $unwind: {
+        path: "$user",
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: "$user",
+      },
+    },
   ]);
   return users;
 }
@@ -221,8 +232,57 @@ async function addPost(data) {
   return post;
 }
 
-async function getUserPosts(userName) {
-  let posts = await postModel.find({ userName: userName });
+async function getUserPosts(userId) {
+  let posts = await postModel.aggregate([
+    {
+      $match: {
+        userId: new ObjectId(userId),
+      },
+    },
+    {
+      $sort: {
+        _id: -1,
+      },
+    },
+    {
+      $limit: 10,
+    },
+    {
+      $lookup: {
+        from: "users",
+        let: {
+          userId: "$userId",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$_id", "$$userId"],
+              },
+            },
+          },
+          {
+            $project: {
+              userName: 1,
+              profilepicture: 1,
+            },
+          },
+        ],
+        as: "user",
+      },
+    },
+    {
+      $unwind: {
+        path: "$user",
+      },
+    },
+    {
+      $set: {
+        userName: "$user.userName",
+        profilepicture: "$user.profilepicture",
+      },
+    },
+  ]);
   return posts;
 }
 
@@ -344,7 +404,6 @@ async function getUserPosts(userName) {
 //   return posts;
 // }
 
-
 // Third Approach
 async function getUserHomePosts(userId) {
   let posts = await connectionModel.aggregate([
@@ -437,9 +496,9 @@ async function getUserHomePosts(userId) {
         _id: -1,
       },
     },
-    {
-      $limit: 3,
-    },
+    // {
+    //   $limit: 3,
+    // },
   ]);
   return posts;
 }
@@ -489,6 +548,7 @@ module.exports = {
   connectDB,
   setUser,
   getUser,
+  searchUser,
   setConnection,
   getFollowers,
   getFollowings,

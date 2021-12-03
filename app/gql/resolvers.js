@@ -8,6 +8,7 @@ const {
   setLike,
   getLikers,
   getUser,
+  searchUser,
   getFollowers,
   getFollowings,
   getUserPosts,
@@ -45,6 +46,10 @@ const resolvers = {
   Query: {
     user(parent, args, context, info) {
       return getUser(args.userId);
+    },
+
+    searchUser(parent, args, context, info) {
+      return searchUser(args.userName);
     },
 
     profile(parent, args, context, info) {
