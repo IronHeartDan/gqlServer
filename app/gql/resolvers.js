@@ -4,6 +4,7 @@ const pubsub = new PubSub();
 const {
   setUser,
   setConnection,
+  getConnection,
   addPost,
   setLike,
   getLikers,
@@ -63,6 +64,22 @@ const resolvers = {
 
     followings(parent, args, context, info) {
       return getFollowings(args.userId, args.skip, args.limit);
+    },
+
+    async isConnection(parent, args, context, info) {
+      let connection = await getConnection({
+        userId: args.userId,
+        who: args.who,
+      });
+      if (connection) {
+        return {
+          status: true,
+        };
+      } else {
+        return {
+          status: false,
+        };
+      }
     },
 
     userPosts(parent, args, context, info) {

@@ -60,6 +60,10 @@ const typeDefs = gql`
     status: Boolean!
   }
 
+  type isConnection {
+    status: Boolean!
+  }
+
   type Post {
     userName: String!
     profilepicture: String
@@ -89,6 +93,7 @@ const typeDefs = gql`
     profile(userId: String!): Profile
     followers(userId: String!, skip: Int = 0, limit: Int = 2): [User]
     followings(userId: String!, skip: Int = 0, limit: Int = 2): [User]
+    isConnection(userId: String!, who: String!): isConnection!
     userPosts(userId: String!): [Post]
     homePosts(userId: String!): [Post]
     likers(postId: String!): [Liker]

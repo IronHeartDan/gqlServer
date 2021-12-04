@@ -9,11 +9,9 @@ const likerModel = require("../models/LikerModel");
 
 //Connect To DB
 async function connectDB() {
-  let dbConnection = null;
-  dbConnection = await mongoose.connect(
+  await mongoose.connect(
     "mongodb+srv://inevitable:Danish1915.@cluster0.vcqka.mongodb.net/database?retryWrites=true&w=majority"
   );
-  return dbConnection;
 }
 
 //Functions
@@ -33,22 +31,54 @@ async function getUser(userId) {
 
 async function searchUser(userName) {
   let query = new RegExp(`^${userName}.*`);
-  console.log(query);
   let users = await userModel.find({ userName: query });
-  console.log(users);
   return users;
 }
 
 //Connection Model Functions
 
 async function setConnection(data) {
-  let connection = new connectionModel(data.connection);
-  await connection.save();
-  return connection;
+  let db = mongoose.connection;
+  let session = await db.startSession();
+  let res = await session.withTransaction(async () => {
+    let connection = await connectionModel.create({
+      userId: data.connection.userId,
+      who: data.connection.who,
+    });
+
+    let connRes = await connection.save({ session: session });
+    let followingRes = await userModel.findByIdAndUpdate(
+      connRes.who,
+      {
+        $inc: {
+          followingCount: 1,
+        },
+      },
+      { session: session }
+    );
+    console.log(followingRes);
+
+    let followersRes = await userModel.findByIdAndUpdate(
+      connRes.userId,
+      {
+        $inc: {
+          followerCount: 1,
+        },
+      },
+      { session: session }
+    );
+    console.log(followingRes);
+  });
+  await session.commitTransaction();
+  await session.endSession();
+  return res;
 }
 
 async function getConnection(data) {
-  let connection = connectionModel(data.connection);
+  let connection = await connectionModel.findOne({
+    userId: new ObjectId(data.userId),
+    who: new ObjectId(data.who),
+  });
   return connection;
 }
 
@@ -550,6 +580,7 @@ module.exports = {
   getUser,
   searchUser,
   setConnection,
+  getConnection,
   getFollowers,
   getFollowings,
   addPost,

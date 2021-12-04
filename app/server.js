@@ -20,7 +20,7 @@ const { connectDB } = require("./mongoose/DbOperations");
 
 
 connectDB()
-  .then((connection) => {
+  .then(() => {
     startServer();
   })
   .catch((err) => {
