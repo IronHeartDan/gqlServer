@@ -10,6 +10,7 @@ const {
   getLikers,
   getUser,
   searchUser,
+  checkUserName,
   getFollowers,
   getFollowings,
   getUserPosts,
@@ -51,6 +52,10 @@ const resolvers = {
 
     searchUser(parent, args, context, info) {
       return searchUser(args.userName);
+    },
+
+    checkUserName(parent, args, context, info) {
+      return checkUserName(args.userName);
     },
 
     profile(parent, args, context, info) {

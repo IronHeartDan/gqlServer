@@ -90,6 +90,7 @@ const typeDefs = gql`
   type Query {
     user(userId: String!): User
     searchUser(userName: String!): [User]
+    checkUserName(userName: String!): Boolean
     profile(userId: String!): Profile
     followers(userId: String!, skip: Int = 0, limit: Int = 2): [User]
     followings(userId: String!, skip: Int = 0, limit: Int = 2): [User]

@@ -35,6 +35,11 @@ async function searchUser(userName) {
   return users;
 }
 
+async function checkUserName(userName) {
+  let user = await userModel.findOne({ userName: userName });
+  return user ? true : false;
+}
+
 //Connection Model Functions
 
 async function setConnection(data) {
@@ -579,6 +584,7 @@ module.exports = {
   setUser,
   getUser,
   searchUser,
+  checkUserName,
   setConnection,
   getConnection,
   getFollowers,
