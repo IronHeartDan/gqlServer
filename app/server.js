@@ -3,7 +3,7 @@ const express = require("express");
 const http = require("http");
 const app = express();
 const httpServer = http.createServer(app);
-
+const PORT = process.env.PORT || 4000;
 // Apollo
 const { ApolloServer } = require("apollo-server-express");
 const { ApolloServerPluginDrainHttpServer } = require("apollo-server-core");
@@ -14,10 +14,9 @@ const { makeExecutableSchema } = require("@graphql-tools/schema");
 //gql
 const typeDefs = require("./gql/typeDefs");
 const resolvers = require("./gql/resolvers");
- 
+
 //Mongoose
 const { connectDB } = require("./mongoose/DbOperations");
-
 
 connectDB()
   .then(() => {
@@ -65,6 +64,6 @@ async function startServer() {
 
   await server.start();
   server.applyMiddleware({ app });
-  await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
+  await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
   console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`);
 }
