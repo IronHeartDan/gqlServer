@@ -5,21 +5,27 @@ const Schema = mongoose.Schema;
 const userSchema = new Schema({
   userEmail: {
     type: String,
+    trim: true,
     required: true,
     unique: true,
   },
   userPhone: {
     type: String,
-    required: true,
-    unique: true,
+    trim: true,
+    index: {
+      unique: true,
+      partialFilterExpression: { userPhone: { $type: "string" } },
+    },
   },
   userName: {
     type: String,
+    trim: true,
     required: true,
     unique: true,
   },
   profilepicture: {
     type: String,
+    trim: true,
     default: null,
   },
   bio: {

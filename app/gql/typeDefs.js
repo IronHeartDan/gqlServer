@@ -3,7 +3,7 @@ const { gql } = require("apollo-server-core");
 const typeDefs = gql`
   input UserInput {
     userEmail: String!
-    userPhone: String!
+    userPhone: String
     userName: String!
     profilepicture: String
     bio: String
