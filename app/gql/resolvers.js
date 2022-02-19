@@ -3,6 +3,7 @@ const pubsub = new PubSub();
 
 const {
   setUser,
+  setUserPhone,
   setConnection,
   getConnection,
   addPost,
@@ -21,6 +22,10 @@ const resolvers = {
   Mutation: {
     insertUser(parent, args, context, info) {
       return setUser(args);
+    },
+
+    updateUserPhone(parent, args, context, info) {
+      return setUserPhone(args.userPhoneInput);
     },
 
     async followUser(parent, args, context, info) {

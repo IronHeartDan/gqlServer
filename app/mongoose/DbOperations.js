@@ -24,6 +24,14 @@ async function setUser(data) {
   return user;
 }
 
+async function setUserPhone(data) {
+  let res = await userModel.findByIdAndUpdate(data._id, {
+    userPhone: data.userPhone,
+  });
+  console.log(res);
+  return true;
+}
+
 async function getUser(userId) {
   let user = await userModel.find({ _id: userId });
   return user[0];
@@ -52,7 +60,7 @@ async function setConnection(data) {
     });
 
     let connRes = await connection.save({ session: session });
-    let followingRes = await userModel.findByIdAndUpdate(
+    await userModel.findByIdAndUpdate(
       connRes.who,
       {
         $inc: {
@@ -61,9 +69,8 @@ async function setConnection(data) {
       },
       { session: session }
     );
-    console.log(followingRes);
 
-    let followersRes = await userModel.findByIdAndUpdate(
+    await userModel.findByIdAndUpdate(
       connRes.userId,
       {
         $inc: {
@@ -72,7 +79,6 @@ async function setConnection(data) {
       },
       { session: session }
     );
-    console.log(followingRes);
   });
   await session.commitTransaction();
   await session.endSession();
@@ -582,6 +588,7 @@ async function getLikers(postId) {
 module.exports = {
   connectDB,
   setUser,
+  setUserPhone,
   getUser,
   searchUser,
   checkUserName,

@@ -2,6 +2,7 @@ const { gql } = require("apollo-server-core");
 
 const typeDefs = gql`
   input UserInput {
+    _id: String!
     userEmail: String!
     userPhone: String
     userName: String!
@@ -12,6 +13,11 @@ const typeDefs = gql`
     postCount: Int
     followerCount: Int
     followingCount: Int
+  }
+
+  input UserPhoneInput {
+    _id: String!
+    userPhone: String!
   }
 
   input ConnectionInput {
@@ -102,6 +108,7 @@ const typeDefs = gql`
 
   type Mutation {
     insertUser(user: UserInput!): User
+    updateUserPhone(userPhoneInput: UserPhoneInput!): Boolean
     followUser(connection: ConnectionInput!): ConnectionInserted
     insertPost(post: PostInput!): PostInserted
     likePost(liker: LikerInput!): [Liker]
